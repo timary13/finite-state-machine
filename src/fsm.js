@@ -11,15 +11,14 @@ class FSM {
         if(config ==null) {
             throw Error("No config!");
         }
-
+        //main state storage
         this.storage = new Stack();
-        
+        //after-undo state storage
+        this.storageReset = new Stack();
         this.config = config;
+        //start state
         this.state = config.initial;
         this.storage.pushing(this.state);
-        this.getTransitions();
-
-
     }
 
     /**
@@ -39,6 +38,9 @@ class FSM {
         if(this.getStates().reduce((acum, item) => item == state ? acum += 1 : acum += 0, 0)) {
             this.state = state;
             this.storage.pushing(state);
+            //save only last state
+            this.storageReset.clearStorage();
+            this.storageReset.pushing(state);
         }
         else {
             throw Error("Not correct state!");
@@ -51,6 +53,7 @@ class FSM {
      * @param event
      */
     trigger(event) {
+        console.log(" before trigger " + this.state);
         //event exist
         //event exist in transition
         if(this.getTransitions().reduce((acum, item) => event == item ? acum += 1 : acum += 0,0)
@@ -64,7 +67,7 @@ class FSM {
             console.log("state " + this.state);
             throw Error("Not correct event!");
         }
-
+        console.log("after trigger " + this.state);
     }
 
     /**
@@ -77,7 +80,6 @@ class FSM {
 
     //return all transitions
     getTransitions(event) {
-
         let result = [];
         let stMas = this.getStates();
         if(event == undefined) {
@@ -88,14 +90,10 @@ class FSM {
             }
         }
         else {
-            console.log("getTransitions " + event);
             if(this.config.states[this.state].transitions.hasOwnProperty(event)) {
-                console.log("+1");
                 result.push(event);
             }
-            console.log("result " + result);
         }
-
         return result;
     }
 
@@ -130,12 +128,14 @@ class FSM {
      * @returns {Boolean}
      */
     undo() {
+        //1st - initial
         if(this.storage._size <= 1) {
             return false;
         }
         else {
-            this.storage.poping();
+            this.storageReset.pushing(this.storage.poping());
             this.state = this.storage.poping();
+            this.storage.pushing(this.state);
             return true;
         }
     }
@@ -146,13 +146,27 @@ class FSM {
      * @returns {Boolean}
      */
     redo() {
-
+        //when empty
+        if( this.storageReset._size < 1) {
+            return false;
+        }
+        else {
+            this.state = this.storageReset.poping();
+            this.storage.poping();
+            return true;
+        }
     }
 
     /**
      * Clears transition history
      */
-    clearHistory() {}
+    clearHistory() {
+        this.storageReset.clearStorage();
+        this.storage.clearStorage();
+        //to initial state
+        this.state = this.config.initial;
+        this.storage.pushing(this.state);
+    }
 }
 
 module.exports = FSM;

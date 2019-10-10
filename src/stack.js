@@ -5,8 +5,11 @@ module.exports = class Stack {
     }
 
     pushing(data) {
-        let size = ++this._size;
-        this._storage[size] = data;
+        //not save equal data near
+        if(this._storage[this._size] != data) {
+            let size = ++this._size;
+            this._storage[size] = data;
+        }
     };
 
     poping() {
@@ -20,6 +23,16 @@ module.exports = class Stack {
             return deletedData;
         }
     };
+
+    clearStorage() {
+        while (this._size > 0) {
+            this.poping();
+            this._size--;
+        }
+        //delete this._storage;
+        this._size = 0;
+    };
+
 }
 
 
